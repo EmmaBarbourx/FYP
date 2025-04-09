@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Existing Colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="dark_beige">#D2B48C</color>
+
+    <!-- Bottom Navigation Icon and Text Colors -->
+    <color name="bottom_nav_icon_checked">#6200EE</color> <!-- Selected Icon Color -->
+    <color name="bottom_nav_icon_unchecked">#9E9E9E</color> <!-- Unselected Icon Color -->
+    <color name="bottom_nav_text_checked">#6200EE</color> <!-- Selected Text Color -->
+    <color name="bottom_nav_text_unchecked">#9E9E9E</color> <!-- Unselected Text Color -->
+</resources>

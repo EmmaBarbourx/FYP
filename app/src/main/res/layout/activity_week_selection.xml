@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <!-- AppBarLayout to host the Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:title="Select Week"
+            app:titleTextColor="@android:color/white"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Content area containing weeks and the archived plans button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- RecyclerView for displaying week items -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewWeeks"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="16dp"/>
+
+        <!-- Button to access Archived Plans -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/archivedPlansButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Archived Plans"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_margin="16dp"/>
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

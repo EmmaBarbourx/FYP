@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Display the Injury Area -->
+        <TextView
+            android:id="@+id/textViewInjuryArea"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Injury Area: Shoulder"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Display the Injury Type -->
+        <TextView
+            android:id="@+id/textViewInjuryType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Injury Type: Rotator Cuff Tear"
+            android:textSize="14sp" />
+
+        <!-- Display the Archive Date -->
+        <TextView
+            android:id="@+id/textViewArchiveDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Archived on: 2025-03-12"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

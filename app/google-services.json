@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "139623652258",
+    "project_id": "injuryrecoveryapplication",
+    "storage_bucket": "injuryrecoveryapplication.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139623652258:android:c6b4aa3ae1ca32fd0630fb",
+        "android_client_info": {
+          "package_name": "com.example.injuryrecoveryapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaItNQd2lXi6jlvnNTsnoeQy4LER9HMCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

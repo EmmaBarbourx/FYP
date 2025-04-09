@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Toolbar at the top -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarSelectExercises"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary" />
+
+    <!-- Content area for your list or placeholders -->
+    <FrameLayout
+        android:id="@+id/frameContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- For now, a simple text placeholder or RecyclerView -->
+        <TextView
+            android:id="@+id/textViewPlaceholder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Plan Exercises Coming Soon!"
+            android:layout_gravity="center" />
+    </FrameLayout>
+
+    <!-- Optional bottom navigation, if you want it here too -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationViewSelectExercises"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        app:menu="@menu/bottom_navigation_menu"/>
+</LinearLayout>
