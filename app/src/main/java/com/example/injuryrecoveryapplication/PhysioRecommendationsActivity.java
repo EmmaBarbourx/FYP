@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.injuryrecoveryapplication.models.Physiotherapist;
+import com.example.injuryrecoveryapplication.utils.InjurySpecialtyUtils;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -102,22 +103,47 @@ public class PhysioRecommendationsActivity extends AppCompatActivity implements 
         String userId = auth.getCurrentUser().getUid();
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    Log.d("PhysioRecommendations", "Got user doc, exists? " + documentSnapshot.exists());
                     if (documentSnapshot.exists()) {
                         String injuryType = documentSnapshot.getString("injuryType");
-                        Log.d("PhysioRecommendations", "User injury type: " + injuryType);
-                        if (injuryType != null && !injuryType.isEmpty()) {
-                            // Use the user's injury type as the search term
-                            searchTerm = injuryType;
-                        }
+                        Log.d("PhysioRecommendations", "User injury type from Firestore: " + injuryType);
+
+                            if (injuryType != null && !injuryType.isEmpty()) {
+                                // Use InjurySpecialtyUtils to get array of keywords
+                                String[] keywords = InjurySpecialtyUtils.getSpecialtyForInjury(injuryType.toLowerCase());
+
+                                if (keywords != null && keywords.length > 0) {
+                                    // Join them all into a single string, e.g., "sprain ankle injury"
+                                    String joinedKeywords = String.join(" ", keywords);
+                                    Log.d("PhysioRecommendations",
+                                            "Using all specialty keywords as searchTerm: " + joinedKeywords);
+
+                                    searchTerm = joinedKeywords;
+                                } else {
+                                    Log.d("PhysioRecommendations",
+                                            "No specialty keywords found, using default physiotherapy.");
+                                    searchTerm = "physiotherapy";
+                                }
+                            } else {
+                                // If injuryType is null or empty, fallback
+                                Log.d("PhysioRecommendations",
+                                        "Injury type is null/empty; using default: physiotherapy");
+                                searchTerm = "physiotherapy";
+                            }
                     } else {
-                        Log.d("PhysioRecommendations", "No injury type found in user profile, using default.");
+                        // If user doc doesn't exist, fallback
+                        Log.d("PhysioRecommendations",
+                                "No user doc found; using default searchTerm=physiotherapy");
+                        searchTerm = "physiotherapy";
                     }
-                    // Request location
+
+                    // Get location
                     requestLocation();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("PhysioRecommendations", "Error fetching user injury: " + e.getMessage());
-                    // Even if fetching fails, still request location
+                    Log.e("PhysioRecommendations", "Error fetching user doc: " + e.getMessage(), e);
+                    // Even if failing, still try to get location with default searchTerm
+                    searchTerm = "physiotherapy";
                     requestLocation();
                 });
     }
@@ -149,7 +175,6 @@ public class PhysioRecommendationsActivity extends AppCompatActivity implements 
                             // Call Yelp API using the determined search term.
                             fetchPhysiotherapistsFromYelp(latitude, longitude, searchTerm);
                         } else {
-                            Log.e("PhysioRecommendations", "Location is null.");
                             Toast.makeText(PhysioRecommendationsActivity.this, "Failed to fetch location.", Toast.LENGTH_SHORT).show();
                         }
                     })
@@ -164,7 +189,7 @@ public class PhysioRecommendationsActivity extends AppCompatActivity implements 
 
     // Query the Yelp API for physiotherapists near the location using the search term
     private void fetchPhysiotherapistsFromYelp(double latitude, double longitude, String term) {
-        String yelpApiKey = getString(R.string.yelp_api_key);
+        String yelpApiKey = "6suoDU3tayIKwJ_IvGtFG1mQ9r8a7LUYcfb58o7vV556pg7DzUIGUh7VX5tE9gM-0s7k01dSAmdE_f9R7EIoWtHQDmu7YBqiX-Zdj0cUKzTD_AS1nLsrQTyHJ88LaHYx";
         YelpApiService yelpApiService = new YelpApiService(yelpApiKey);
 
         yelpApiService.searchPhysios(latitude, longitude, term, new Callback() {

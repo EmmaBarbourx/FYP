@@ -27,11 +27,11 @@ public class YelpApiService {
             String encodedTerm = URLEncoder.encode(term, StandardCharsets.UTF_8.toString());
             // Build the request URL with the location, a 30km radius, and the physiotherapy category
             String url = BASE_URL
-                    + "?term=" + encodedTerm
+                    + "?term=physio"
                     + "&latitude=" + latitude
                     + "&longitude=" + longitude
                     + "&radius=30000" // 30km radius
-                    + "&categories=physiotherapy";
+                   + "&categories=physicaltherapy";
 
             OkHttpClient client = new OkHttpClient();
             Request request = new Request.Builder()
