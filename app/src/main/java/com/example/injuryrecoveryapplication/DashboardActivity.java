@@ -28,6 +28,7 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DashboardActivity extends AppCompatActivity {
@@ -100,10 +101,15 @@ public class DashboardActivity extends AppCompatActivity {
                     }
 
                     if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
+                        List<DocumentSnapshot> docList = new ArrayList<>(queryDocumentSnapshots.getDocuments());
+                        // Reverse so oldest is at the front
+                        Collections.reverse(docList);
+
+
                         List<Entry> entries = new ArrayList<>();
                         int dayIndex = 1; // X-axis value for each entry
 
-                        for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        for (DocumentSnapshot document : docList) {
                             String painLevel = document.getString("painLevel");
 
                             if (painLevel != null) {
