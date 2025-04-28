@@ -87,6 +87,8 @@ public class ExerciseDbApiService {
                         String exEquipment = obj.optString("equipment");
                         String exGifUrl = obj.optString("gifUrl");
                         String exTarget = obj.optString("target");
+
+                        Log.d(TAG, "API exercise [" + i + "]  id=" + exId + "  name=" + exName);
                         JSONArray secondaryMusclesArray = obj.optJSONArray("secondaryMuscles");
                         JSONArray instructionsArray = obj.optJSONArray("instructions");
 

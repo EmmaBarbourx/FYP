@@ -372,6 +372,31 @@ public class CameraExerciseActivity extends AppCompatActivity {
             angleDegrees = computeAngle(lsX, lsY, rsX, rsY, leX, leY);
         }
 
+        else if ("leftKneeAngle".equals(angleName)) {
+            float hX = currentKeypoints[11][1], hY = currentKeypoints[11][0];
+            float kX = currentKeypoints[13][1], kY = currentKeypoints[13][0];
+            float aX = currentKeypoints[15][1], aY = currentKeypoints[15][0];
+            angleDegrees = computeAngle(hX, hY, kX, kY, aX, aY);
+
+        } else if ("rightKneeAngle".equals(angleName)) {
+            float hX = currentKeypoints[12][1], hY = currentKeypoints[12][0];
+            float kX = currentKeypoints[14][1], kY = currentKeypoints[14][0];
+            float aX = currentKeypoints[16][1], aY = currentKeypoints[16][0];
+            angleDegrees = computeAngle(hX, hY, kX, kY, aX, aY);
+
+        } else if ("leftHipAngle".equals(angleName)) {
+            float sX = currentKeypoints[5][1],  sY = currentKeypoints[5][0];
+            float hX = currentKeypoints[11][1], hY = currentKeypoints[11][0];
+            float kX = currentKeypoints[13][1], kY = currentKeypoints[13][0];
+            angleDegrees = computeAngle(sX, sY, hX, hY, kX, kY);
+
+        } else if ("rightHipAngle".equals(angleName)) {
+            float sX = currentKeypoints[6][1],  sY = currentKeypoints[6][0];
+            float hX = currentKeypoints[12][1], hY = currentKeypoints[12][0];
+            float kX = currentKeypoints[14][1], kY = currentKeypoints[14][0];
+            angleDegrees = computeAngle(sX, sY, hX, hY, kX, kY);
+        }
+
         return angleDegrees;
     }
 

@@ -3,10 +3,13 @@ package com.example.injuryrecoveryapplication;
 import android.util.Log;
 
 import com.example.injuryrecoveryapplication.models.Exercise;
+import com.example.injuryrecoveryapplication.utils.AngleReadyLibrary;
+import com.example.injuryrecoveryapplication.utils.AngleReadyUtils;
 import com.example.injuryrecoveryapplication.utils.InjurySpecialtyUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class RecoveryPlanGenerator {
@@ -15,41 +18,38 @@ public class RecoveryPlanGenerator {
         // Log the total exercises received from the API (already filtered by category)
         Log.d("RecoveryPlanGenerator", "Total exercises received: " + allExercises.size());
 
-        // Instead of filtering by keywords, simply use the list as-is:
-        List<Exercise> filteredExercises = new ArrayList<>(allExercises);
-        Log.d("RecoveryPlanGenerator", "Using exercises count: " + filteredExercises.size());
+        List<Exercise> angleReadyBaseline = new ArrayList<>();
 
-    /*
-    String injuryArea = RecoveryPlanActivity.mapInjuryTypeToArea(injuryType);
-    String[] keywords;
-    if (injuryArea != null) {
-        keywords = new String[]{injuryArea.toLowerCase()}; // Use the injury area (lowercased) as the keyword
-    } else {
-        keywords = InjurySpecialtyUtils.getSpecialtyForInjury(injuryType);
-    }
-
-    List<Exercise> filteredExercises = new ArrayList<>();
-    if (keywords != null) {
         for (Exercise ex : allExercises) {
-            for (String keyword : keywords) {
-                // Check if the exercise name or description contains the keyword
-                if (ex.getName().toLowerCase().contains(keyword) ||
-                        ex.getDescription().toLowerCase().contains(keyword)) {
-                    filteredExercises.add(ex);
-                    break;
+            if (AngleReadyUtils.isAngleReady(ex.getId())) {
+                AngleReadyLibrary.VariantInfo vi = AngleReadyLibrary.MAP.get(ex.getId());
+                if ("baseline".equals(vi.difficulty)) {
+                    angleReadyBaseline.add(ex);
                 }
             }
         }
-    }
+        Log.d("RecoveryPlanGenerator",
+                "Angle-ready baseline count = " + angleReadyBaseline.size());
 
-    Log.d("RecoveryPlanGenerator", "Filtered exercises count: " + filteredExercises.size());
-    if (filteredExercises.isEmpty()) {
-        Log.d("RecoveryPlanGenerator", "No exercises matched. Using all exercises. Count: " + allExercises.size());
-        filteredExercises = allExercises;
-    }
-    */
+        // If no angle ready exercises are found, revert to full list
+        List<Exercise> filteredExercises;
+        if (angleReadyBaseline.isEmpty()) {
+            Log.d("RecoveryPlanGenerator",
+                    "No angle-ready matches – falling back to generic plan.");
+            filteredExercises = new ArrayList<>(allExercises);   // original behaviour
+        } else {
+            filteredExercises = angleReadyBaseline;              // knee demo set
+        }
+        Log.d("RecoveryPlanGenerator",
+                "Using exercises count = " + filteredExercises.size());
 
-        // Generate a weekly plan for 7 days with alternating workout and rest days
+        if (filteredExercises.isEmpty()) {
+            Log.w("RecoveryPlanGenerator",
+                    "No exercises available at all - no plan generation.");
+            return Collections.emptyList();
+        }
+
+            // Generate a weekly plan for 7 days with alternating workout and rest days
         List<DailyPlan> weeklyPlan = new ArrayList<>();
         int numDays = 7;
         for (int day = 1; day <= numDays; day++) {
