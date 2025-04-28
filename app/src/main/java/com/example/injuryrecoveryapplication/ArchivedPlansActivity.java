@@ -1,14 +1,18 @@
 package com.example.injuryrecoveryapplication;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -28,6 +32,7 @@ public class ArchivedPlansActivity extends AppCompatActivity {
     private List<ArchivedPlan> archivedPlansList = new ArrayList<>();
     private FirebaseFirestore db;
     private FirebaseAuth auth;
+    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +43,12 @@ public class ArchivedPlansActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setTitle("Archived Plans");
         setSupportActionBar(toolbar);
+
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            handleNavigation(item.getItemId());
+            return true;
+        });
 
         // Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerViewArchivedPlans);
@@ -90,5 +101,33 @@ public class ArchivedPlansActivity extends AppCompatActivity {
                     Toast.makeText(ArchivedPlansActivity.this, "Error loading archived plans",
                             Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void handleNavigation(int itemId) {
+        if (itemId == R.id.nav_dashboard && !this.getClass().equals(DashboardActivity.class)) {
+            startActivity(new Intent(this, DashboardActivity.class));
+            finish();
+        } else if (itemId == R.id.nav_profile && !this.getClass().equals(ProfileActivity.class)) {
+            startActivity(new Intent(this, ProfileActivity.class));
+            finish();
+        } else if (itemId == R.id.nav_settings && !this.getClass().equals(SettingsActivity.class)) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            finish();
+        } else if (itemId == R.id.nav_logout) {
+            handleLogout();
+        }
+    }
+
+    private void handleLogout() {
+        new AlertDialog.Builder(this)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", (d, w) -> {
+                    FirebaseAuth.getInstance().signOut();
+                    startActivity(new Intent(this, LoginActivity.class));
+                    finish();
+                })
+                .setNegativeButton("No", (d, w) -> d.dismiss())
+                .show();
     }
 }
