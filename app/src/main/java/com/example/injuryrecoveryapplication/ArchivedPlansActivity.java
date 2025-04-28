@@ -17,6 +17,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -69,6 +70,7 @@ public class ArchivedPlansActivity extends AppCompatActivity {
         // Only plans marked as archived will appear
         Log.d(TAG, "Querying recoveryPlan where archived = true...");
         recoveryPlanRef.whereEqualTo("archived", true)
+                .orderBy("archivedDate", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     Log.d(TAG, "Query returned " + queryDocumentSnapshots.size() + " documents");
