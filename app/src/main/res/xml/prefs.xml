@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--  Auto-adjust plan  -->
+    <SwitchPreferenceCompat
+        android:key="pref_auto_adjust"
+        android:title="Auto-adjust plan"
+        android:summary="Automatically make exercises easier or harder when pain logs change"
+        android:defaultValue="false" />
+
+    <!--  Daily reminder  -->
+    <SwitchPreferenceCompat
+        android:key="pref_daily_reminder"
+        android:title="Daily reminders"
+        android:summary="Send a reminder each evening to log pain and do exercises"
+        android:defaultValue="false" />
+
+</PreferenceScreen>

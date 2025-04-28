@@ -13,7 +13,8 @@ kotlinKapt = "1.9.0"
 playServicesLocation = "21.3.0"
 poseDetectionCommon = "17.0.0"
 firebaseCrashlyticsBuildtools = "3.0.3"
-uiGraphicsAndroid = "1.7.8" # Kotlin KAPT version aligned with Kotlin
+uiGraphicsAndroid = "1.7.8"
+preference = "1.2.1" # Kotlin KAPT version aligned with Kotlin
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -28,6 +29,7 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 pose-detection-common = { group = "com.google.mlkit", name = "pose-detection-common", version.ref = "poseDetectionCommon" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
+preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

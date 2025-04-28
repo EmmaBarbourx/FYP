@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.ui.graphics.android)
+    implementation(libs.preference)
 
     // Test
     testImplementation(libs.junit)

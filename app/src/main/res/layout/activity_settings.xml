@@ -17,18 +17,14 @@
         android:titleTextColor="@android:color/white"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Example Settings Content -->
-    <TextView
-        android:id="@+id/settingsText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Settings Works"
-        android:textSize="18sp"
-        android:textColor="#34495E"
+    <FrameLayout
+        android:id="@+id/settings_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
