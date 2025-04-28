@@ -22,28 +22,56 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Content area containing weeks and the archived plans button -->
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <!-- RecyclerView for displaying week items -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewWeeks"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:padding="16dp"/>
+            android:padding="16dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@+id/generatePlanButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/archivedPlansButton"/>
 
-        <!-- Button to access Archived Plans -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/archivedPlansButton"
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/generatePlanButton"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Archived Plans"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_margin="16dp"/>
-    </LinearLayout>
+            android:text="Generate Recovery Plan"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/archivedPlansButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Archived Plans"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_margin="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"/>
+
+    <!-- Bottom Navigation Bar -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        app:itemIconTint="@color/bottom_nav_icon_color"
+        app:itemTextColor="@color/bottom_nav_text_color"
+        app:menu="@menu/bottom_navigation_menu"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -29,10 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * RecoveryPlanActivity is now fully switched to using ExerciseDB.
- * The old Wger logic (offset, merges, etc.) has been removed.
- */
+
 public class RecoveryPlanActivity extends AppCompatActivity {
 
     private static final String TAG = "RecoveryPlanActivity";
@@ -331,18 +328,17 @@ public class RecoveryPlanActivity extends AppCompatActivity {
                 // Save to Firestore
                 saveWeeklyPlan(weeklyRecoveryPlans);
 
-                // Show the user a "Week Selection" list
+                // Bounce back to WeekSelectionActivity so the weeks list + Archived button appear
                 runOnUiThread(() -> {
-                    List<Integer> weeks = new ArrayList<>();
-                    for (int i = 1; i <= 6; i++) {
-                        weeks.add(i);
-                    }
-                    WeeklyPlanAdapter adapter1 = new WeeklyPlanAdapter(weeks, RecoveryPlanActivity.this::onWeekClick);
-                    recyclerView.setAdapter(adapter1);
-
                     Toast.makeText(RecoveryPlanActivity.this,
-                            "Fetched " + exercises.size() + " from ExerciseDB; Using " + filtered.size() + " light-equipment exercises",
+                            "Fetched " + exercises.size() + " exercises; plan saved.",
                             Toast.LENGTH_LONG).show();
+
+
+                    Intent back = new Intent(RecoveryPlanActivity.this, WeekSelectionActivity.class);
+                    back.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(back);
+                    finish();
                 });
             }
 
