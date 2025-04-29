@@ -10,4 +10,6 @@
     <color name="bottom_nav_icon_unchecked">#9E9E9E</color> <!-- Unselected Icon Color -->
     <color name="bottom_nav_text_checked">#6200EE</color> <!-- Selected Text Color -->
     <color name="bottom_nav_text_unchecked">#9E9E9E</color> <!-- Unselected Text Color -->
+
+    <color name="teal_200">#FF03DAC5</color>
 </resources>

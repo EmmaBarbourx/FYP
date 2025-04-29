@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -17,13 +18,17 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import android.graphics.Matrix;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.injuryrecoveryapplication.utils.ExerciseEngine;
 import com.example.injuryrecoveryapplication.utils.ExerciseSpecLibrary;
+import com.example.injuryrecoveryapplication.ExerciseSpec;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -34,12 +39,17 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.example.injuryrecoveryapplication.utils.RepListener;
+import android.os.Vibrator;
+import android.os.VibrationEffect;
+import android.content.Context;
 
 
-public class CameraExerciseActivity extends AppCompatActivity {
+public class CameraExerciseActivity extends AppCompatActivity implements RepListener {
 
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 1001;
 
@@ -53,8 +63,11 @@ public class CameraExerciseActivity extends AppCompatActivity {
     private ExecutorService cameraExecutor;
     private ExerciseSpec spec;
     private long lastFrameTime = 0L;
-    private float timeInCorrectRange = 0f;
     private TextView feedbackTextView;
+    private TextView repCountTextView;
+    private ExerciseEngine engine;
+    private LinearProgressIndicator holdProgressBar;
+
 
     // TFLite
     private Interpreter tflite;
@@ -71,6 +84,7 @@ public class CameraExerciseActivity extends AppCompatActivity {
 
     private int repCount = 0;
     private boolean armDown = false;
+    private boolean inRangeState = false;
 
     @ExperimentalGetImage
     @Override
@@ -84,7 +98,7 @@ public class CameraExerciseActivity extends AppCompatActivity {
         }
 
         // Lookup the spec in ExerciseSpecLibrary
-        this.spec  = ExerciseSpecLibrary.getSpec(exerciseId);
+        this.spec = ExerciseSpecLibrary.getSpec(exerciseId);
         if (spec == null) {
             android.util.Log.w("CameraExerciseActivity",
                     "No ExerciseSpec found for exerciseId=" + exerciseId
@@ -95,7 +109,13 @@ public class CameraExerciseActivity extends AppCompatActivity {
                             + " angles=" + spec.getAnglesToTrack()
                             + " repGoal=" + spec.getRepGoal()
                             + " holdTime=" + spec.getHoldTimeSeconds());
+
+            engine = new ExerciseEngine(spec);
+            engine.setListener(this);
         }
+
+        repCountTextView = findViewById(R.id.textViewRepCount);
+        repCountTextView.setText("Reps: 0 / " + spec.getRepGoal());
 
         // Setup toolbar
         Toolbar toolbar = findViewById(R.id.toolbarCamera);
@@ -118,6 +138,15 @@ public class CameraExerciseActivity extends AppCompatActivity {
         // Overlay view
         poseOverlayView = findViewById(R.id.poseOverlay);
         feedbackTextView = findViewById(R.id.textViewFeedback);
+
+        // Progress bar
+        holdProgressBar   = findViewById(R.id.holdProgress);
+        if (spec.isRequiresHold()) {
+            holdProgressBar.setVisibility(View.VISIBLE);
+            holdProgressBar.setProgress(0);          // start empty
+        } else {
+            holdProgressBar.setVisibility(View.GONE);
+        }
 
         // Create YUV-RGB converter
         yuvToRgbConverter = new YuvToRgbConverter(this);
@@ -271,68 +300,41 @@ public class CameraExerciseActivity extends AppCompatActivity {
 
             final boolean finalAllAnglesInRange = allAnglesInRange;
 
-            // If hold-based exercise
+            // Use whatever two angles the current spec tracks
+            List<String> trg = spec.getAnglesToTrack();
+            float angleA = computeAngleForName(trg.get(0));
+            float angleB = computeAngleForName(trg.size() > 1 ? trg.get(1) : trg.get(0));
+
+            ExerciseEngine.Update up = engine.onFrame(
+                    angleA,           // left
+                    angleB,           // right
+                    finalAllAnglesInRange,
+                    deltaSeconds);
+
+            // UI updates returned by the engine
+            if (up.feedback != null) {
+                runOnUiThread(() -> feedbackTextView.setText(up.feedback));
+            }
+
             if (spec.isRequiresHold()) {
-                // add up timeInCorrectRange if posture is correct
-                if (finalAllAnglesInRange) {
-                    timeInCorrectRange += deltaSeconds;
+                if (up.feedback != null && up.feedback.startsWith("Holding:")) {
+                    String currentSecStr = up.feedback.split(" ")[1];
+                    float secondsHeld    = Float.parseFloat(currentSecStr);
+                    int progress = Math.min(100,
+                            Math.round(secondsHeld / spec.getHoldTimeSeconds() * 100f));
+                    runOnUiThread(() -> holdProgressBar.setProgress(progress));
                 } else {
-                    timeInCorrectRange = 0f;
-                }
-                android.util.Log.d("CameraExercise", "timeInCorrectRange=" + timeInCorrectRange);
-
-
-                float timeLeft = spec.getHoldTimeSeconds() - timeInCorrectRange;
-                runOnUiThread(() -> {
-                    if (!finalAllAnglesInRange) {
-                        feedbackTextView.setText("Incorrect form!");
-                    } else if (timeLeft > 0) {
-                        feedbackTextView.setText(String.format("Holding: %.1f / %d seconds",
-                                timeInCorrectRange, spec.getHoldTimeSeconds()));
-                    }
-                });
-
-                if (timeInCorrectRange >= spec.getHoldTimeSeconds()) {
-                    // user has held posture long enough
-                    runOnUiThread(() -> {
-                        android.util.Log.d("CameraExercise",
-                                "Hold complete! " + spec.getHoldTimeSeconds() + "s");
-
-                    });
-                }
-
-            } else {
-                // For rep-based exercises
-                if (spec.getRepGoal() > 0 && spec.getAnglesToTrack().size() == 1) {
-                    float angleDegrees = computeAngleForName(spec.getAnglesToTrack().get(0));
-
-
-                    if (!finalAllAnglesInRange) {
-
-                        runOnUiThread(() -> feedbackTextView.setText("Incorrect form!"));
-                    } else {
-
-                        runOnUiThread(() -> feedbackTextView.setText("Good posture!"));
-                    }
-
-                    // treat angle < 60 => "armDown", angle > 150 => "armUp"
-                    if (!armDown && angleDegrees < 60f) {
-                        armDown = true;
-                    } else if (armDown && angleDegrees > 150f) {
-                        repCount++;
-                        armDown = false;
-                        runOnUiThread(() -> {
-                            android.util.Log.d("CameraExercise", "Rep count=" + repCount);
-                            if (repCount >= spec.getRepGoal()) {
-                                android.util.Log.d("CameraExercise",
-                                        "Exercise complete! Reached repGoal=" + spec.getRepGoal());
-                                // Show success dialog
-                            }
-                        });
-                    }
+                    // outside of hold range , reset bar
+                    runOnUiThread(() -> holdProgressBar.setProgress(0));
                 }
             }
 
+            Object tag = repCountTextView.getTag();
+            if (tag == null || !tag.equals(Integer.toString(up.repCount))) {
+                repCountTextView.setTag(Integer.toString(up.repCount));
+                runOnUiThread(() ->
+                        repCountTextView.setText("Reps: " + up.repCount + " / " + spec.getRepGoal()));
+            }
         } finally {
             image.close();
         }
@@ -508,6 +510,38 @@ public class CameraExerciseActivity extends AppCompatActivity {
                     .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
                     .show();
         }
+    }
+
+    @Override
+    public void onRepComplete(int newCount) {
+        // Vibrates when rep is complete
+        Vibrator vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vib != null && vib.hasVibrator()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vib.vibrate(
+                        VibrationEffect.createOneShot(
+                                100, VibrationEffect.DEFAULT_AMPLITUDE));
+            }
+        }
+
+        // ensure UI shows the fresh number
+        runOnUiThread(() ->
+                repCountTextView.setText(
+                        "Reps: " + newCount + " / " + spec.getRepGoal()));
+    }
+
+    @Override
+    public void onExerciseComplete() {
+        // all reps finished
+        runOnUiThread(this::showSuccessDialog);
+    }
+
+    private void showSuccessDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Nice work!")
+                .setMessage("You hit your goal of " + spec.getRepGoal() + " reps 🎉")
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     @Override

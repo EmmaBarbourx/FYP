@@ -12,6 +12,7 @@ public class ExerciseSpec {
     // Hold-style exercises
     private boolean requiresHold;
     private int holdTimeSeconds;
+    private final boolean countAtBottom;
 
     public ExerciseSpec(
             List<String> anglesToTrack,
@@ -19,7 +20,9 @@ public class ExerciseSpec {
             float minAngle,
             float maxAngle,
             boolean requiresHold,
-            int holdTimeSeconds
+            int holdTimeSeconds,
+            boolean countAtBottom
+
     ) {
         this.anglesToTrack = anglesToTrack;
         this.repGoal = repGoal;
@@ -27,6 +30,7 @@ public class ExerciseSpec {
         this.maxAngle = maxAngle;
         this.requiresHold = requiresHold;
         this.holdTimeSeconds = holdTimeSeconds;
+        this.countAtBottom = countAtBottom;
     }
 
     // Getters
@@ -48,4 +52,5 @@ public class ExerciseSpec {
     public int getHoldTimeSeconds() {
         return holdTimeSeconds;
     }
+    public boolean isCountAtBottom()     { return countAtBottom; }
 }
