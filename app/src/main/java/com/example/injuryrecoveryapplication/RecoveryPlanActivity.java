@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.injuryrecoveryapplication.models.Exercise;
 import com.example.injuryrecoveryapplication.utils.ExerciseDbBodyPartMapping;  // Make sure you created this
+import com.example.injuryrecoveryapplication.utils.ExerciseMetaCache;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -319,6 +320,9 @@ public class RecoveryPlanActivity extends AppCompatActivity {
                     }
                 }
                 Log.d(TAG, "Filtered down to " + filtered.size() + " exercises (light/no equipment).");
+
+                // cache user meta-data for quick look-ups
+                ExerciseMetaCache.addAll(filtered);
 
                 //Generate a 6-week plan using only these filtered exercises
                 RecoveryPlanGenerator generator = new RecoveryPlanGenerator();

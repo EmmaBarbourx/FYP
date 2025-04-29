@@ -43,6 +43,16 @@ public class RecoveryPlanGenerator {
         Log.d("RecoveryPlanGenerator",
                 "Using exercises count = " + filteredExercises.size());
 
+        // Adding extra data plan adjuster will rely on
+        for (Exercise ex : filteredExercises) {
+            if (AngleReadyLibrary.contains(ex.getId())) {
+                AngleReadyLibrary.VariantInfo vi = AngleReadyLibrary.get(ex.getId());
+                ex.setAngleSupported(true);
+                ex.setFamily(vi.family);
+                ex.setDifficulty(vi.difficulty);
+            }
+        }
+
         if (filteredExercises.isEmpty()) {
             Log.w("RecoveryPlanGenerator",
                     "No exercises available at all - no plan generation.");

@@ -39,6 +39,11 @@ public class ExerciseDbApiService {
         void onFailure(String errorMessage);
     }
 
+    public interface OneExerciseCallback {
+        void onSuccess(Exercise exercise);
+        void onFailure(String errorMessage);
+    }
+
     // Fetches exercises by a given body part
     public void fetchExercisesByBodyPartAll(String bodyPart, ExerciseDbCallback callback) {
 
@@ -121,6 +126,77 @@ public class ExerciseDbApiService {
                 } catch (JSONException e) {
                     Log.e(TAG, "JSON parsing error: " + e.getMessage());
                     callback.onFailure("JSON parse error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    // Pull a single exercise
+    public void fetchExerciseById(String id, OneExerciseCallback cb) {
+
+        String url = BASE_URL + "/exercise/" + id;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .addHeader("X-RapidAPI-Key", RAPIDAPI_KEY)
+                .addHeader("X-RapidAPI-Host", RAPIDAPI_HOST)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(@NonNull Call call,
+                                            @NonNull IOException e) {
+                Log.e(TAG, "fetchExerciseById onFailure: " + e.getMessage());
+                cb.onFailure(e.getMessage());
+            }
+
+            @Override public void onResponse(@NonNull Call call,
+                                             @NonNull Response response)
+                    throws IOException {
+
+                if (!response.isSuccessful() || response.body() == null) {
+                    String err = "Unsuccessful response code: " + response.code();
+                    Log.e(TAG, "fetchExerciseById onResponse: " + err);
+                    cb.onFailure(err);
+                    return;
+                }
+
+                String json = response.body().string();
+
+                try {
+                    JSONObject obj;
+                    if (json.trim().startsWith("[")) {
+                        obj = new JSONArray(json).getJSONObject(0);
+                    } else {
+                        obj = new JSONObject(json);
+                    }
+
+                    // Map JSON fields to Exercise model
+                    Exercise exercise = new Exercise();
+                    exercise.setId(obj.optString("id"));
+                    exercise.setName(obj.optString("name"));
+                    exercise.setBodyPart(obj.optString("bodyPart"));
+                    exercise.setEquipment(obj.optString("equipment"));
+                    exercise.setGifUrl(obj.optString("gifUrl"));
+                    exercise.setTarget(obj.optString("target"));
+
+                    // Put the instructions array into bullet list
+                    JSONArray instructionsArray = obj.optJSONArray("instructions");
+                    if (instructionsArray != null) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int j = 0; j < instructionsArray.length(); j++) {
+                            sb.append("- ").append(instructionsArray.getString(j)).append("\n");
+                        }
+                        exercise.setInstructions(sb.toString());
+                    } else {
+                        exercise.setInstructions("No instructions from ExerciseDB.");
+                    }
+
+                    cb.onSuccess(exercise);
+
+                } catch (JSONException je) {
+                    Log.e(TAG, "JSON parse error: " + je.getMessage());
+                    cb.onFailure(je.getMessage());
                 }
             }
         });

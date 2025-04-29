@@ -13,6 +13,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.injuryrecoveryapplication.utils.PlanAdjuster;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -127,6 +128,13 @@ public class PainTrackingActivity extends AppCompatActivity {
                     painLevelSpinner.setSelection(0); // Reset spinner to default
                     // Refresh pain logs
                     loadPainLogs();
+
+                    // call the adjuster
+                    PlanAdjuster.maybeAdjust(
+                            PainTrackingActivity.this,
+                            FirebaseAuth.getInstance().getUid(),
+                            currentInjuryId
+                    );
                 })
                 .addOnFailureListener(e -> {
                     // Show an error message if saving fails
