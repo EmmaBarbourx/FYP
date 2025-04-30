@@ -41,6 +41,14 @@ public final class PlanAdjuster {
                                    @NonNull String  userId,
                                    @NonNull String  injuryId) {
 
+        boolean enabled = androidx.preference.PreferenceManager
+                .getDefaultSharedPreferences(ctx)
+                .getBoolean("pref_auto_adjust", false);
+        if (!enabled) {
+            Log.d(TAG, "Auto-adjust turned OFF – skipping");
+            return;
+        }
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // get the last 3 pain logs for this injury (newest first)
