@@ -1,5 +1,6 @@
 package com.example.injuryrecoveryapplication;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,22 +26,47 @@ import java.util.ArrayList;
 public class ExerciseDetailsDialogFragment extends DialogFragment {
 
     private static final String ARG_EXERCISES = "exercises"; // Key to pass exercises
+    private static final int REQ_CAMERA = 1001;
+    private static final String ARG_DAY_ID    = "dayId";
+
+    private ArrayList<Exercise> exercises;
 
     // Create a new dialog instance with a list of exercises
-    public static ExerciseDetailsDialogFragment newInstance(ArrayList<Exercise> exercises) {
+    public static ExerciseDetailsDialogFragment newInstance(ArrayList<Exercise> exercises, String dayId) {
         ExerciseDetailsDialogFragment fragment = new ExerciseDetailsDialogFragment();
         Bundle args = new Bundle();
-        // 1) Put the list as a PARCELABLE array
+        // Put the list as a parsable array
         args.putParcelableArrayList(ARG_EXERCISES, exercises);
+        args.putString(ARG_DAY_ID, dayId);
+
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void onActivityResult(int req, int res, @Nullable Intent data) {
+        super.onActivityResult(req, res, data);
+        Log.d("ExerciseDetailsDialog", "onActivityResult triggered. req=" + req + " res=" + res);
+
+        if (req == REQ_CAMERA && res == Activity.RESULT_OK && data != null) {
+
+            String exId  = data.getStringExtra("exerciseId");       // exercise user just did
+            String dayId = getArguments().getString(ARG_DAY_ID);    // day that owns this dialog
+
+            Log.d("ExerciseDetailsDialog", "Got dayId=" + dayId + " exId=" + exId);
+            if (exId != null && dayId != null) {
+                // hand the pair back to the activity
+                ((RecoveryPlanActivity) requireActivity())
+                        .notifyExerciseDone(dayId, exId);
+            }
+        }
     }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         // Retrieve the list of exercises passed to the dialog
-        ArrayList<Exercise> exercises = getArguments().getParcelableArrayList(ARG_EXERCISES);
+        exercises = getArguments().getParcelableArrayList(ARG_EXERCISES);
 
         // Inflate the layout for the dialog
         LayoutInflater inflater = requireActivity().getLayoutInflater();
@@ -122,7 +148,7 @@ public class ExerciseDetailsDialogFragment extends DialogFragment {
                     Intent intent = new Intent(requireContext(), CameraExerciseActivity.class);
                     // pass id
                     intent.putExtra("exerciseId", exercise.getId());
-                    startActivity(intent);
+                    startActivityForResult(intent, REQ_CAMERA);
                 });
 
                 // Add this button to the container

@@ -15,6 +15,7 @@ public class Exercise implements Parcelable {
     private boolean angleSupported = false; // true if this ID lives in AngleReadyLibrary
     private String  family;                 // e.g. squat
     private String  difficulty;
+    private boolean done = false;
 
     public Exercise() {
     }
@@ -43,6 +44,7 @@ public class Exercise implements Parcelable {
         angleSupported = in.readByte() != 0;
         family         = in.readString();
         difficulty     = in.readString();
+        done           = in.readByte() != 0;
     }
 
     @Override
@@ -57,6 +59,7 @@ public class Exercise implements Parcelable {
         parcel.writeByte((byte) (angleSupported ? 1 : 0));
         parcel.writeString(family);
         parcel.writeString(difficulty);
+        parcel.writeByte((byte) (done ? 1 : 0));
     }
 
     @Override
@@ -135,4 +138,7 @@ public class Exercise implements Parcelable {
 
     public String  getDifficulty()             { return difficulty; }
     public void    setDifficulty(String d)     { this.difficulty = d; }
+
+    public boolean isDone()         { return done; }
+    public void    setDone(boolean d){ this.done = d; }
 }

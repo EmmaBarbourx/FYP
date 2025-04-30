@@ -18,6 +18,7 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import android.graphics.Matrix;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -67,6 +68,8 @@ public class CameraExerciseActivity extends AppCompatActivity implements RepList
     private TextView repCountTextView;
     private ExerciseEngine engine;
     private LinearProgressIndicator holdProgressBar;
+    private volatile boolean trackingActive = false;   // gate for processImageProxy
+    private TextView countdownView;
 
 
     // TFLite
@@ -120,6 +123,7 @@ public class CameraExerciseActivity extends AppCompatActivity implements RepList
         // Setup toolbar
         Toolbar toolbar = findViewById(R.id.toolbarCamera);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Camera Exercise");
         }
@@ -138,6 +142,9 @@ public class CameraExerciseActivity extends AppCompatActivity implements RepList
         // Overlay view
         poseOverlayView = findViewById(R.id.poseOverlay);
         feedbackTextView = findViewById(R.id.textViewFeedback);
+
+        countdownView = findViewById(R.id.textViewCountdown);   // add a large full-screen TextView to layout
+        startPrepCountdown();      // kick it off
 
         // Progress bar
         holdProgressBar   = findViewById(R.id.holdProgress);
@@ -242,6 +249,10 @@ public class CameraExerciseActivity extends AppCompatActivity implements RepList
     // Process each camera frame to detect pose and update feedback
     @ExperimentalGetImage
     private void processImageProxy(ImageProxy image) {
+        if (!trackingActive || repCount  >= spec.getRepGoal()) {
+            image.close();
+            return;
+        }
         try {
             // Convert the ImageProxy into a ByteBuffer in the format needed by the model
             ByteBuffer inputBuffer = prepareInput(image);
@@ -470,6 +481,29 @@ public class CameraExerciseActivity extends AppCompatActivity implements RepList
         return (float) Math.toDegrees(angleRad);
     }
 
+    // 5 second visible countdown before pose tracking is enabled
+    private void startPrepCountdown() {
+        new android.os.CountDownTimer(5000, 1000) {
+            public void onTick(long ms) {
+                int sec = (int) (ms / 1000);
+                runOnUiThread(() -> countdownView.setText(String.valueOf(sec + 1)));
+            }
+
+            public void onFinish() {
+                runOnUiThread(() -> countdownView.setVisibility(View.GONE));
+                trackingActive = true;   // allow processImageProxy to run
+            }
+        }.start();
+    }
+
+    private void shutdownCamera() {
+        if (cameraProvider != null) cameraProvider.unbindAll();
+        if (cameraExecutor != null && !cameraExecutor.isShutdown())
+            cameraExecutor.shutdownNow();
+        trackingActive = false;                        // gate analyzer
+        if (tflite != null) { tflite.close(); tflite = null; }
+    }
+
     // Update rep count based on elbow angle changes
     private void updateElbowRep(float angle) {
         if (!armDown && angle < 60f) {
@@ -533,6 +567,7 @@ public class CameraExerciseActivity extends AppCompatActivity implements RepList
     @Override
     public void onExerciseComplete() {
         // all reps finished
+        trackingActive = false;
         runOnUiThread(this::showSuccessDialog);
     }
 
@@ -540,21 +575,34 @@ public class CameraExerciseActivity extends AppCompatActivity implements RepList
         new AlertDialog.Builder(this)
                 .setTitle("Nice work!")
                 .setMessage("You hit your goal of " + spec.getRepGoal() + " reps 🎉")
-                .setPositiveButton("OK", null)
+                .setPositiveButton("OK", (d, w) -> {
+                    d.dismiss();
+
+                    Intent data = new Intent();
+                    data.putExtra("exerciseId", exerciseId);
+                    Log.d("CameraExerciseActivity", "Calling setResult(RESULT_OK) for exId=" + exerciseId);
+                    setResult(RESULT_OK, data);
+
+                    shutdownCamera();          // make sure resources go
+                    finish();                  // returns to RecoveryPlanActivity
+                })
+                .setCancelable(false)
                 .show();
+    }
+
+    @Override public void onBackPressed() {
+        shutdownCamera();
+        super.onBackPressed();
+    }
+
+    @Override public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
     }
 
     @Override
     protected void onDestroy() {
+        shutdownCamera();
         super.onDestroy();
-        if (cameraExecutor != null) {
-            cameraExecutor.shutdown();
-        }
-        if (tflite != null) {
-            tflite.close();
-        }
-        if (yuvToRgbConverter != null) {
-            yuvToRgbConverter.release();
-        }
     }
 }

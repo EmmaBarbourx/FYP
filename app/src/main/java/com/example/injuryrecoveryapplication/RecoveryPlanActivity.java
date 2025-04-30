@@ -93,6 +93,18 @@ public class RecoveryPlanActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter == null) {
+            if (weekNumber > 0) {
+                loadDailyPlanForWeek(weekNumber);
+            } else {
+                fetchInjuryTypeAndGeneratePlan();
+            }
+        }
+    }
+
+    @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("weekNumber", weekNumber);
@@ -216,7 +228,7 @@ public class RecoveryPlanActivity extends AppCompatActivity {
                                 // If it's week 1, we have no "previous weeks"
                                 if (weekNumber == 1) {
                                     runOnUiThread(() -> {
-                                        RecoveryPlanAdapter adapter = new RecoveryPlanAdapter(dailyPlans, this::updatePlanCompletion);
+                                        adapter = new RecoveryPlanAdapter(dailyPlans, this::updatePlanCompletion);
                                         adapter.setCurrentWeekNumber(weekNumber);
                                         adapter.setOverallCompletedDays(currentWeekCompletedCount);
                                         adapter.setPreviousWeeksCompletedDays(0);
@@ -252,7 +264,7 @@ public class RecoveryPlanActivity extends AppCompatActivity {
                                                 final int previousWeeksCompleted = cumulativeCompleted;
 
                                                 runOnUiThread(() -> {
-                                                    RecoveryPlanAdapter adapter = new RecoveryPlanAdapter(dailyPlans, this::updatePlanCompletion);
+                                                    adapter = new RecoveryPlanAdapter(dailyPlans, this::updatePlanCompletion);
                                                     adapter.setCurrentWeekNumber(weekNumber);
                                                     adapter.setOverallCompletedDays(currentWeekCompletedCount);
                                                     adapter.setPreviousWeeksCompletedDays(previousWeeksCompleted);
@@ -420,6 +432,15 @@ public class RecoveryPlanActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     // Handle error fetching user doc
                 });
+    }
+
+    public void notifyExerciseDone(String dayId, String exerciseId) {
+        Log.d("RecoveryPlanActivity", "notifyExerciseDone(" + dayId + ", " + exerciseId + ")");
+        if (adapter != null) {
+            adapter.refreshAfterExerciseDone(dayId, exerciseId);
+        } else {
+            Log.d("RecoveryPlanActivity", "adapter is null ");
+        }
     }
 
     // Map an injury type like "ACL tear" or "Rotator Cuff Tear" to a general area such as "Knee" or "Shoulder"

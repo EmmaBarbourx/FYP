@@ -88,38 +88,60 @@ public class DashboardActivity extends AppCompatActivity {
 
     // Listen for the latest 7 pain log entries and update the chart
     private void fetchAndListenToPainLogs() {
-        String userId = auth.getCurrentUser().getUid();
+        final String userId = auth.getCurrentUser().getUid();
 
-        painLogListener = db.collection("users").document(userId).collection("painLogs")
-                .whereEqualTo("archived", false)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(7) // Last 7 entries
-                .addSnapshotListener((queryDocumentSnapshots, e) -> {
-                    if (e != null) {
-                        Log.e("DashboardActivity", "Error fetching pain logs: " + e.getMessage());
+        // Detach any previous listener
+        if (painLogListener != null) {
+            painLogListener.remove();
+            painLogListener = null;
+        }
+
+        // Get the current injury ID first
+        db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener(userSnap -> {
+                    String curId = userSnap.getString("currentInjuryId");
+                    if (curId == null) {
+                        // No active injury, clear the chart and return
+                        updatePainTrendsChart(new ArrayList<>());
                         return;
                     }
 
-                    if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
-                        List<DocumentSnapshot> docList = new ArrayList<>(queryDocumentSnapshots.getDocuments());
-                        // Reverse so oldest is at the front
-                        Collections.reverse(docList);
+                    painLogListener = db.collection("users").document(userId)
+                            .collection("painLogs")
+                            .document(curId)
+                            .collection("logs")
+                            .orderBy("timestamp", Query.Direction.DESCENDING)
+                            .limit(7)                      // last 7 entries
+                            .addSnapshotListener((snap, e) -> {
+                                if (e != null) {
+                                    Log.e("DashboardActivity",
+                                            "Error fetching pain logs: " + e.getMessage());
+                                    return;
+                                }
 
+                                if (snap == null || snap.isEmpty()) {
+                                    updatePainTrendsChart(new ArrayList<>());
+                                    return;
+                                }
 
-                        List<Entry> entries = new ArrayList<>();
-                        int dayIndex = 1; // X-axis value for each entry
+                                List<DocumentSnapshot> docs = new ArrayList<>(snap.getDocuments());
+                                Collections.reverse(docs);                 // oldest to newest
 
-                        for (DocumentSnapshot document : docList) {
-                            String painLevel = document.getString("painLevel");
-
-                            if (painLevel != null) {
-                                entries.add(new Entry(dayIndex++, Float.parseFloat(painLevel)));
-                            }
-                        }
-
-                        updatePainTrendsChart(entries); // Update chart with new data
-                    }
-                });
+                                List<Entry> entries = new ArrayList<>();
+                                int day = 1;
+                                for (DocumentSnapshot doc : docs) {
+                                    String painLevel = doc.getString("painLevel");
+                                    if (painLevel != null) {
+                                        entries.add(new Entry(day++, Float.parseFloat(painLevel)));
+                                    }
+                                }
+                                updatePainTrendsChart(entries);
+                            });
+                })
+                .addOnFailureListener(err ->
+                        Log.e("DashboardActivity",
+                                "Failed to read currentInjuryId: " + err.getMessage()));
     }
 
     private void updatePainTrendsChart(List<Entry> entries) {

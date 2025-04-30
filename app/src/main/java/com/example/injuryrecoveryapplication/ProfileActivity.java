@@ -212,7 +212,7 @@ public class ProfileActivity extends AppCompatActivity {
         private void onInjuryChangeRequested(String newInjury) {
             new AlertDialog.Builder(ProfileActivity.this)
                     .setTitle("Reset Recovery Progress")
-                    .setMessage("Changing your injury will reset all your recovery progress (recovery plan, pain logs, and completed exercises). Are you sure you want to proceed?")
+                    .setMessage("Changing your injury will reset all your recovery progress and add the plan to Archived Plans. Are you sure you want to proceed?")
                     .setPositiveButton("Confirm", (dialog, which) -> {
 
                         archiveAllData(() -> updateUserProfileWithNewInjury(newInjury));
@@ -331,37 +331,62 @@ public class ProfileActivity extends AppCompatActivity {
 
 
     private void archivePainLogs(Runnable onComplete) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String userId = FirebaseAuth.getInstance().getUid();
 
         // Query the active pain logs (those not yet archived)
-        db.collection("users").document(userId).collection("painLogs")
-                .whereEqualTo("archived", false)
+        db.collection("users").document(userId)
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    List<Task<Void>> copyTasks = new ArrayList<>();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        Log.d("archivePainLogs", "Found pain log to archive: " + doc.getId());
-                        // Copy each pain log document into the "archivedPainLogs" collection
-                        Task<Void> task = db.collection("users").document(userId)
-                                .collection("archivedPainLogs")
-                                .document(doc.getId())
-                                .set(doc.getData());
-                        copyTasks.add(task);
-                        Log.d("archivePainLogs", "Archiving pain log: " + doc.getId());
+                .addOnSuccessListener(userDoc  -> {
+
+                    String currentInjuryId = userDoc.getString("currentInjuryId");
+                    if (currentInjuryId == null || currentInjuryId.isEmpty()) {
+                        onComplete.run();            // nothing to archive
+                        return;
                     }
-                    Tasks.whenAll(copyTasks)
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d("archivePainLogs", "Successfully archived all pain logs.");
-                                onComplete.run();
+
+                    db.collection("users").document(userId)
+                            .collection("painLogs")
+                            .document(currentInjuryId)
+                            .collection("logs")
+                            .get()
+                            .addOnSuccessListener(logsSnapshot -> {
+
+                                List<Task<Void>> copyTasks = new ArrayList<>();
+
+                                for (DocumentSnapshot doc : logsSnapshot.getDocuments()) {
+                                    Log.d("archivePainLogs", "Archiving pain log: " + doc.getId());
+
+
+                                    copyTasks.add(
+                                            db.collection("users").document(userId)
+                                                    .collection("archivedPainLogs")
+                                                    .document(currentInjuryId)
+                                                    .collection("logs")
+                                                    .document(doc.getId())
+                                                    .set(doc.getData())
+                                    );
+
+                                    // delete original
+                                    copyTasks.add(doc.getReference().delete());
+                                }
+
+                                Tasks.whenAll(copyTasks)
+                                        .addOnSuccessListener(x -> {
+                                            Log.d("archivePainLogs", "Successfully archived all pain logs.");
+                                            onComplete.run();
+                                        })
+                                        .addOnFailureListener(err -> {
+                                            Log.e("archivePainLogs", "Error archiving pain logs", err);
+                                            onComplete.run();   // still continue the workflow
+                                        });
                             })
-                            .addOnFailureListener(e -> {
-                                Log.e("archivePainLogs", "Error archiving some pain logs", e);
-                                onComplete.run(); // Continue even if there was an error
+                            .addOnFailureListener(err -> {
+                                Log.e("archivePainLogs", "Error fetching live pain logs", err);
+                                onComplete.run();
                             });
                 })
-                .addOnFailureListener(e -> {
-                    Log.e("archivePainLogs", "Error fetching pain logs", e);
+                .addOnFailureListener(err -> {
+                    Log.e("archivePainLogs", "Error fetching user document", err);
                     onComplete.run();
                 });
     }

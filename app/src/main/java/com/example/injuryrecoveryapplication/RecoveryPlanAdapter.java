@@ -45,6 +45,43 @@ public class RecoveryPlanAdapter extends RecyclerView.Adapter<RecoveryPlanAdapte
         this.previousWeeksCompletedDays = days;
     }
 
+    public void refreshAfterExerciseDone(String dayId, String exerciseId) {
+
+        Log.d("Adapter", "↩️ notifyExerciseDone  day=" + dayId + "  ex=" + exerciseId);
+        //  find the right day
+        for (DailyPlan dp : dailyPlans) {
+            if (!dp.getDay().equals(dayId)) continue;
+
+            Log.d("Adapter", "• found DailyPlan row → " + dp.getDay());
+
+            // flip  that exercise’s flag
+            for (Exercise ex : dp.getExercises()) {
+                if (ex.getId().equals(exerciseId)) {
+                    Log.d("Adapter", "  ↳ setting done for " + ex.getName());
+                    ex.setDone(true);
+                    break;
+                }
+            }
+
+            for (Exercise ex : dp.getExercises()) {
+                Log.d("Adapter",
+                        "     - " + ex.getName() + "   done=" + ex.isDone());
+            }
+
+            // if every exercise in that day is now done , auto-complete the day
+            boolean allDone = true;
+            for (Exercise ex : dp.getExercises()) {
+                if (!ex.isDone()) { allDone = false; break; }
+            }
+            Log.d("Adapter", "   allDone=" + allDone);
+            if (allDone) attemptDayAutoComplete(dp);
+
+            break;   // day found, no need to continue loop
+        }
+
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public RecoveryPlanViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -84,6 +121,20 @@ public class RecoveryPlanAdapter extends RecyclerView.Adapter<RecoveryPlanAdapte
         int overallDay = (week - 1) * 7 + (position + 1);
         // Calculate the total number of completed days across all weeks
         int totalCompletedAcrossWeeks = previousWeeksCompletedDays + overallCompletedDays;
+
+        boolean isRestDay = exerciseList == null || exerciseList.isEmpty();
+
+
+       // button text
+        String label = isRestDay
+                ? (dailyPlan.isCompleted() ? "Rest Day – Done" : "Rest Day – Mark")
+                : (dailyPlan.isCompleted() ? "Completed"       : "Mark as Done");
+        holder.completeButton.setText(label);
+
+       //  enable / disable
+        holder.completeButton.setEnabled(
+                !dailyPlan.isCompleted()    // never re-enable a finished day
+                        &&  isRestDay);
 
         // Handle button click to toggle completion status
         holder.completeButton.setOnClickListener(v -> {
@@ -129,7 +180,10 @@ public class RecoveryPlanAdapter extends RecyclerView.Adapter<RecoveryPlanAdapte
                 androidx.fragment.app.FragmentActivity activity =
                         (androidx.fragment.app.FragmentActivity) v.getContext();
                 ExerciseDetailsDialogFragment dialogFragment =
-                        ExerciseDetailsDialogFragment.newInstance(exercisesToShow);
+                        ExerciseDetailsDialogFragment.newInstance(
+                                exercisesToShow,
+                                dailyPlan.getDay()
+                        );
                 dialogFragment.show(activity.getSupportFragmentManager(), "ExerciseDetailsDialog");
             }
         });
@@ -149,6 +203,29 @@ public class RecoveryPlanAdapter extends RecyclerView.Adapter<RecoveryPlanAdapte
             dayTextView = itemView.findViewById(R.id.textViewDay);
             exercisesTextView = itemView.findViewById(R.id.textViewExercises);
             completeButton = itemView.findViewById(R.id.buttonComplete);
+        }
+    }
+
+    private void attemptDayAutoComplete(DailyPlan dp) {
+
+        int adapterPos = dailyPlans.indexOf(dp);              // 0-based in week
+        int overallDay = (currentWeekNumber - 1) * 7 + (adapterPos + 1);
+        int totalDoneSoFar = previousWeeksCompletedDays + overallCompletedDays;
+
+        Log.d("Adapter", " attemptDayAutoComplete  "
+                + "day=" + dp.getDay()
+                + "  adapterPos=" + adapterPos
+                + "  overallDay=" + overallDay
+                + "  totalDoneSoFar=" + totalDoneSoFar);
+
+        // only change button status if this day is exactly the next unchecked day
+        if (overallDay == totalDoneSoFar + 1) {
+            Log.d("Adapter", " Auto-completing " + dp.getDay());
+            dp.setCompleted(true);
+            onCompletionChange.accept(dp.getDay(), true);
+            overallCompletedDays++;        // advance local counter
+        } else {
+            Log.d("Adapter", " Not eligible yet");
         }
     }
 }

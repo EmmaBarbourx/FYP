@@ -107,6 +107,10 @@ public class PainTrackingActivity extends AppCompatActivity {
 
         // Get current user ID and current timestamp
         String userId = auth.getCurrentUser().getUid();
+        if (currentInjuryId == null) {
+            Toast.makeText(this, "Profile still loading…", Toast.LENGTH_SHORT).show();
+            return;
+        }
         String timestamp = String.valueOf(System.currentTimeMillis());
 
         // Build a map for the pain log data
@@ -114,11 +118,11 @@ public class PainTrackingActivity extends AppCompatActivity {
         painLog.put("painLevel", painLevel);
         painLog.put("notes", notes);
         painLog.put("timestamp", timestamp);
-        painLog.put("archived", false);
-        painLog.put("currentInjuryId", currentInjuryId);  // Add the current injury ID
 
         // Save the pain log document under the user's painLogs collection
         db.collection("users").document(userId).collection("painLogs")
+                .document(currentInjuryId)
+                .collection("logs")
                 .document(timestamp)
                 .set(painLog)
                 .addOnSuccessListener(aVoid -> {
@@ -150,14 +154,19 @@ public class PainTrackingActivity extends AppCompatActivity {
     private void loadPainLogs() {
         String userId = auth.getCurrentUser().getUid();
 
+        if (currentInjuryId == null || currentInjuryId.isEmpty()) {
+            return;   // nothing to load yet
+        }
+
         db.collection("users").document(userId).collection("painLogs")
-                .whereEqualTo("archived", false)
+                .document(currentInjuryId)            // one document per injury
+                .collection("logs")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .limit(7)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     painLogList.clear();
-                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                    for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
                         // Convert document to PainLog object and add to list
                         PainLog painLog = document.toObject(PainLog.class);
                         painLogList.add(painLog);
