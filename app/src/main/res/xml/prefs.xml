@@ -1,18 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--  Auto-adjust plan  -->
-    <SwitchPreferenceCompat
-        android:key="pref_auto_adjust"
-        android:title="Auto-adjust plan"
-        android:summary="Automatically make exercises easier or harder when pain logs change"
-        android:defaultValue="false" />
+    <PreferenceCategory android:title="Account details">
 
-    <!--  Daily reminder  -->
-    <SwitchPreferenceCompat
-        android:key="pref_daily_reminder"
-        android:title="Daily reminders"
-        android:summary="Send a reminder each evening to log pain and do exercises"
-        android:defaultValue="false" />
+        <!-- read-only e-mail row -->
+        <Preference
+            android:key="pref_email"
+            android:title="Signed-in e-mail"
+            android:selectable="false"
+            android:summary="loading…" />
+
+        <!-- launches the Firebase reset-password e-mail -->
+        <Preference
+            android:key="pref_reset_pw"
+            android:title="Reset password"
+            android:summary="Send a password-reset e-mail" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Preferences">
+
+        <SwitchPreferenceCompat
+            android:key="pref_auto_adjust"
+            android:title="Auto-adjust recovery plan"
+            android:summary="Suggest easier or harder exercises based on pain logs"
+            android:defaultValue="false" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_haptic_feedback"
+            android:title="Vibrate on rep complete"
+            android:summary="Play a short vibration when Pose AI counts a rep"
+            android:defaultValue="true" />
+    </PreferenceCategory>
 
 </PreferenceScreen>

@@ -2,6 +2,7 @@ package com.example.injuryrecoveryapplication;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
@@ -24,6 +25,7 @@ import android.widget.TextView;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import com.example.injuryrecoveryapplication.utils.ExerciseEngine;
 import com.example.injuryrecoveryapplication.utils.ExerciseSpecLibrary;
@@ -548,13 +550,20 @@ public class CameraExerciseActivity extends AppCompatActivity implements RepList
 
     @Override
     public void onRepComplete(int newCount) {
+
+        SharedPreferences prefs =
+                PreferenceManager.getDefaultSharedPreferences(this);
+        boolean vibrateOnRep = prefs.getBoolean("pref_vibrate", true);
+
         // Vibrates when rep is complete
-        Vibrator vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        if (vib != null && vib.hasVibrator()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vib.vibrate(
-                        VibrationEffect.createOneShot(
-                                100, VibrationEffect.DEFAULT_AMPLITUDE));
+        if (vibrateOnRep) {
+            Vibrator vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (vib != null && vib.hasVibrator()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vib.vibrate(
+                            VibrationEffect.createOneShot(
+                                    100, VibrationEffect.DEFAULT_AMPLITUDE));
+                }
             }
         }
 
