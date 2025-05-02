@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -45,6 +46,7 @@ public class RecoveryPlanActivity extends AppCompatActivity {
 
     private TextView textViewInjuryType;
     private int weekNumber; // e.g. 1..6
+    private @Nullable String openDayId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +59,8 @@ public class RecoveryPlanActivity extends AppCompatActivity {
         } else {
             weekNumber = getIntent().getIntExtra("weekNumber", 0);
         }
+
+        openDayId = getIntent().getStringExtra("openDayId");
 
         // Set up Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -158,6 +162,7 @@ public class RecoveryPlanActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             adapter = new RecoveryPlanAdapter(weeklyPlan, this::updatePlanCompletion);
                             recyclerView.setAdapter(adapter);
+                            maybeOpenRequestedDay(weeklyPlan);
                         });
                     } else {
                         // No plan for this week, generate a new one from ExerciseDB
@@ -233,6 +238,8 @@ public class RecoveryPlanActivity extends AppCompatActivity {
                                         adapter.setOverallCompletedDays(currentWeekCompletedCount);
                                         adapter.setPreviousWeeksCompletedDays(0);
                                         recyclerView.setAdapter(adapter);
+
+                                        maybeOpenRequestedDay(dailyPlans);
                                     });
                                 } else {
                                     // For weeks > 1, add up previous weeks completed days
@@ -269,6 +276,8 @@ public class RecoveryPlanActivity extends AppCompatActivity {
                                                     adapter.setOverallCompletedDays(currentWeekCompletedCount);
                                                     adapter.setPreviousWeeksCompletedDays(previousWeeksCompleted);
                                                     recyclerView.setAdapter(adapter);
+
+                                                    maybeOpenRequestedDay(dailyPlans);
                                                 });
                                             })
                                             .addOnFailureListener(e -> {
@@ -441,6 +450,22 @@ public class RecoveryPlanActivity extends AppCompatActivity {
         } else {
             Log.d("RecoveryPlanActivity", "adapter is null ");
         }
+    }
+
+    private void maybeOpenRequestedDay(List<DailyPlan> dailyPlans) {
+        if (openDayId == null) return;
+
+        recyclerView.post(() -> {               // wait until views are laid out
+            for (int i = 0; i < dailyPlans.size(); i++) {
+                if (dailyPlans.get(i).getDay().equals(openDayId)) {
+                    RecyclerView.ViewHolder vh =
+                            recyclerView.findViewHolderForAdapterPosition(i);
+                    if (vh != null) vh.itemView.performClick();   // open dialog
+                    break;
+                }
+            }
+            openDayId = null;
+        });
     }
 
     // Map an injury type like "ACL tear" or "Rotator Cuff Tear" to a general area such as "Knee" or "Shoulder"

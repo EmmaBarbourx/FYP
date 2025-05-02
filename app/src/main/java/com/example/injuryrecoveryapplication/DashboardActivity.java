@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.injuryrecoveryapplication.utils.PlanNavigator;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -76,7 +77,10 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(new Intent(this, PainTrackingActivity.class));
         });
         findViewById(R.id.exerciseFeature).setOnClickListener(v -> {
-            startActivity(new Intent(this, SelectPlanExercisesActivity.class));
+            String uid = FirebaseAuth.getInstance().getUid();
+            if (uid != null) {
+                PlanNavigator.openNextWorkout(this, uid);   // jump to next workout
+            }
         });
         findViewById(R.id.physioRecommendationsFeature).setOnClickListener(v -> {
             // Pass a default injury type directly to PhysioRecommendationsActivity
